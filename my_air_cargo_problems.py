@@ -227,9 +227,17 @@ class AirCargoProblem(Problem):
         carried out from the current state in order to satisfy all of the goal
         conditions by ignoring the preconditions required for an action to be
         executed.
+
+        Figure out how many of the goal states are not yet satisfied in the
+        current state. Because the number of unsatisfied goals equals the minimum
+        number of actions you would need to take to satisfy them all.
         '''
         # TODO implement (see Russell-Norvig Ed-3 10.2.3  or Russell-Norvig Ed-2 11.2)
         count = 0
+        for goal in self.goal:
+            for idx, stmt in enumerate(self.state_map):
+                if stmt == goal and node.state[idx] == 'F':
+                    count = count + 1
         return count
 
 
