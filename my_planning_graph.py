@@ -1,4 +1,5 @@
 from aimacode.planning import Action
+from aimacode.logic import PropKB
 from aimacode.search import Problem
 from aimacode.utils import expr
 from lp_utils import decode_state
@@ -312,6 +313,20 @@ class PlanningGraph():
         #   to see if a proposed PgNode_a has prenodes that are a subset of the previous S level.  Once an
         #   action node is added, it MUST be connected to the S node instances in the appropriate s_level set.
 
+        for action in self.all_actions:
+            a_node = PgNode_a(action)
+            # see if a proposed PgNode_a has prenodes that are a subset of the previous S level
+            # s.issubset(t) -- test whether every element in s is in t
+            if a_node.prenodes.issubset(self.s_levels[level]):
+                # update the list
+                self.a_levels.append(set())
+                self.a_levels[level].add(a_node)
+                # it MUST be connected to the S node instances in the appropriate s_level set
+                for previous_s_node in [node for node in self.s_levels[level] if node in a_node.prenodes]:
+                    previous_s_node.children.add(a_node)
+                    a_node.parents.add(previous_s_node)
+
+
     def add_literal_level(self, level):
         ''' add an S (literal) level to the Planning Graph
 
@@ -329,6 +344,13 @@ class PlanningGraph():
         #   may be "added" to the set without fear of duplication.  However, it is important to then correctly create and connect
         #   all of the new S nodes as children of all the A nodes that could produce them, and likewise add the A nodes to the
         #   parent sets of the S nodes
+        self.s_levels.append(set())
+        for prev_a_node in self.a_levels[level-1]:
+            for eff_s_node in prev_a_node.effnodes:
+                self.s_levels[level].add(eff_s_node)
+                for added_s_node in [node for node in self.s_levels[level] if node == eff_s_node]:
+                    prev_a_node.children.add(added_s_node)
+                    added_s_node.parents.add(prev_a_node)
 
     def update_a_mutex(self, nodeset):
         ''' Determine and update sibling mutual exclusion for A-level nodes
